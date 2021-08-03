@@ -1,4 +1,4 @@
-package me.devsign.toby;
+package me.devsign.toby.dao;
 
 import me.devsign.toby.domain.User;
 import org.junit.jupiter.api.BeforeEach;
