@@ -31,4 +31,17 @@ public class UserDaoTest {
         assertThat(user2.getName(), is(user.getName()));
         assertThat(user2.getPassword(), is(user.getPassword()));
     }
+
+    @Test
+    void setJdbcContext() {
+    }
+
+    @Test
+    void add() {
+
+    }
+
+    @Test
+    void get() {
+    }
 }

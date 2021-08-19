@@ -12,25 +12,27 @@ import java.sql.SQLException;
 
 public class UserDao {
     private ConnectionMaker connectionMaker;
+    private JdbcContext jdbcContext;
+
+    public void setJdbcContext(JdbcContext jdbcContext) {
+        this.jdbcContext = jdbcContext;
+    }
 
     public UserDao(ConnectionMaker connectionMaker) {
         this.connectionMaker = connectionMaker;
     }
 
-    public void add(User user) throws ClassNotFoundException, SQLException {
-        Connection c = connectionMaker.makeConnection();
-        PreparedStatement ps = c.prepareStatement(
-                "insert into user(id, name, password) values(?, ?, ?)"
+    public void add(final User user) throws SQLException {
+        jdbcContext.workWithStatementStrategy(
+                // new StatementStrategy(Connection c) {...}를 람다식으로 대체
+                c -> {
+                    PreparedStatement ps = c.prepareStatement("insert into user(id, name, password) values(?, ?, ?)");
+                    ps.setString(1, user.getId());
+                    ps.setString(2, user.getName());
+                    ps.setString(3, user.getPassword());
+                    return ps;
+                }
         );
-
-        ps.setString(1, user.getId());
-        ps.setString(2, user.getName());
-        ps.setString(3, user.getPassword());
-
-        ps.executeUpdate();
-
-        ps.close();
-        c.close();
     }
 
     public User get(String id) throws ClassNotFoundException, SQLException {
