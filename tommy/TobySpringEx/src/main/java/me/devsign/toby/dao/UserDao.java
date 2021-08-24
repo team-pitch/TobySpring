@@ -4,55 +4,59 @@ import me.devsign.toby.connection.ConnectionMaker;
 import me.devsign.toby.connection.DConnectionMaker;
 import me.devsign.toby.connection.SimpleConnectionMaker;
 import me.devsign.toby.domain.User;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowMapper;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 public class UserDao {
-    private ConnectionMaker connectionMaker;
-    private JdbcContext jdbcContext;
+    private JdbcTemplate jdbcTemplate;
+    private RowMapper<User> userRowMapper = (rs, rowNum) -> {
+        User user = new User();
 
-    public void setJdbcContext(JdbcContext jdbcContext) {
-        this.jdbcContext = jdbcContext;
+        user.setId(rs.getString(1));
+        user.setName(rs.getString(2));
+        user.setPassword(rs.getString(3));
+        return user;
+    };
+
+    public void setJdbcTemplate(DataSource dataSource) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
-    public UserDao(ConnectionMaker connectionMaker) {
-        this.connectionMaker = connectionMaker;
+    public void deleteAll() {
+        this.jdbcTemplate.update("delete from users");
     }
 
     public void add(final User user) throws SQLException {
-        jdbcContext.workWithStatementStrategy(
-                // new StatementStrategy(Connection c) {...}를 람다식으로 대체
-                c -> {
-                    PreparedStatement ps = c.prepareStatement("insert into user(id, name, password) values(?, ?, ?)");
-                    ps.setString(1, user.getId());
-                    ps.setString(2, user.getName());
-                    ps.setString(3, user.getPassword());
-                    return ps;
-                }
-        );
+        this.jdbcTemplate.update("insert into user(id, name, password) values(?, ?, ?)"
+                , user.getId(), user.getName(), user.getPassword());
     }
 
-    public User get(String id) throws ClassNotFoundException, SQLException {
-        Connection c = connectionMaker.makeConnection();
+    public int getCount() {
+//        return this.jdbcTemplate.query(
+//                con -> con.prepareStatement("select count(*) from users"),
+//                rs -> {
+//                    rs.next();
+//                    return rs.getInt(1);
+//                });
+        return this.jdbcTemplate.queryForObject("select count(*) from users", Integer.class);
+    }
 
-        PreparedStatement ps = c.prepareStatement(
-                "select * from user where id = ?"
-        );
-        ps.setString(1, id);
-        ResultSet rs = ps.executeQuery();
-        User user = new User();
-        while(rs.next()) {
-            user.setId(rs.getString(1));
-            user.setName(rs.getString(2));
-            user.setPassword(rs.getString(3));
-        }
+    public User get(String id) {
+        return (User) this.jdbcTemplate.query("select * from users where id = ?",
+                userRowMapper, id);
+    }
 
-        rs.close();
-        ps.close();
-        c.close();
-        return user;
+    public List<User> getAll() {
+        return this.jdbcTemplate.query("select * from users", userRowMapper);
     }
 }

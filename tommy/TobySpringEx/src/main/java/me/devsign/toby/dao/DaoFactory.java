@@ -1,21 +1,25 @@
 package me.devsign.toby.dao;
 
-import me.devsign.toby.connection.ConnectionMaker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.sql.DataSource;
+
 @Configuration
 public class DaoFactory {
-    private ConnectionMaker connectionMaker;
+    private DataSource dataSource;
 
     @Autowired
-    public DaoFactory(ConnectionMaker connectionMaker) {
-        this.connectionMaker = connectionMaker;
+    public DaoFactory(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Bean
     public UserDao userDao() {
-        return new UserDao(connectionMaker);
+        UserDao userDao = new UserDao();
+        userDao.setJdbcTemplate(this.dataSource);
+
+        return userDao;
     }
 }
