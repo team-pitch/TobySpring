@@ -18,7 +18,7 @@ class DaoFactoryTest {
     private static DaoFactory daoFactory;
 
     static {
-        daoFactory = new DaoFactory((ConnectionMaker) new DConnectionMaker(ds));
+        daoFactory = new DaoFactory(ds);
     }
 
     @Test
